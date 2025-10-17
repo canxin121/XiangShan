@@ -317,4 +317,7 @@ class MainBtb(implicit p: Parameters) extends BasePredictor with HasMainBtbParam
   XSPerfAccumulate("train_hit_mispredict", t1_valid && t1_mispredictBranch.valid && t1_hitMispredictBranch)
   XSPerfAccumulate("multihit_write_conflict", multiWriteConflict)
   XSPerfHistogram("multihit_count", PopCount(s2_multiHitMask), s2_fire, 0, NumWay * NumAlignBanks)
+
+  XSPerfAccumulate("pred_miss", s2_fire && s2_hitMask.reduce(!_ && !_))
+
 }
