@@ -36,6 +36,7 @@ import xiangshan.frontend.bpu.sc.Sc
 import xiangshan.frontend.bpu.tage.Tage
 import xiangshan.frontend.bpu.ubtb.MicroBtb
 import xiangshan.frontend.bpu.utage.MicroTage
+import xiangshan.frontend.bpu.utage.MicroTageMeta
 
 class Bpu(implicit p: Parameters) extends BpuModule with HalfAlignHelper {
   class DummyBpuIO extends Bundle {
@@ -272,11 +273,19 @@ class Bpu(implicit p: Parameters) extends BpuModule with HalfAlignHelper {
   // if ubtb or abtb find a taken branch, use the corresponding prediction
   // otherwise, use fall-through prediction
   // TODO: maybe need compare position？
+  private val utagePrediction = RegEnable(utage.io.prediction, 0.U.asTypeOf(Valid(new MicroTageMeta)), s0_fire)
+  private val useUtageTaken = utagePrediction.valid &&
+    (utagePrediction.bits.cfiPosition === ubtb.io.prediction.cfiPosition)
+  private val fixUbtbTaken = Mux(
+    useUtageTaken,
+    utagePrediction.bits.taken,
+    ubtb.io.prediction.taken
+  )
   s1_prediction :=
     MuxCase(
       fallThrough.io.prediction,
       Seq(
-        ubtb.io.prediction.taken -> ubtb.io.prediction
+        fixUbtbTaken -> ubtb.io.prediction
 //      abtb.io.prediction.taken -> abtb.io.prediction
       )
     )
