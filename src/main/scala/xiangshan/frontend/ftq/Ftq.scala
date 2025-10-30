@@ -128,7 +128,9 @@ class Ftq(implicit p: Parameters) extends FtqModule
   // --------------------------------------------------------------------------------
   // Interaction with BPU
   // --------------------------------------------------------------------------------
-  io.fromBpu.prediction.ready      := distanceBetween(bpuPtr(0), commitPtr(0)) < FtqSize.U
+  // We limit the distance between BP and IF so that branch update can be written back to BPU
+  io.fromBpu.prediction.ready := distanceBetween(bpuPtr(0), commitPtr(0)) < FtqSize.U &&
+    distanceBetween(bpuPtr(0), ifuPtr(0)) < BpRunAheadDistance.U
   io.fromBpu.meta.ready            := true.B
   io.fromBpu.speculationMeta.ready := true.B
 
